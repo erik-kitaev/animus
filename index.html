@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ANIMUS</title>
+    <!-- PWA Setup -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#050508">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ANIMUS">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // --- ANIMUS Core Database Engine ---
+        const SUPABASE_URL = 'https://dzvsdgcsfsrzdpwbhchc.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6dnNkZ2NzZnNyemRwd2JoY2hjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4MzM1NzgsImV4cCI6MjA5MTQwOTU3OH0.ZGpmnMLcj4zIESVacMflzLAw_nE4f1LN4vhIWE6R-Ig';
+        
+        // Initial Mock (Active until Supabase or Fallback loads)
+        window.db = {
+            isReady: false,
+            async getCurrentUser() { return null; },
+            async signIn() { alert("SYSTEM STARTING: Please wait 5 seconds for the database to sync."); return null; },
+            async signUp() { alert("SYSTEM STARTING: Please wait 5 seconds for the database to sync."); return null; },
+            async getProfile() { return null; },
+            async getTestResults() { return []; },
+            async getCompletedLessons() { return []; }
+        };
+
+        async function initDB() {
+            let supabase = null;
+            try {
+                if (typeof window.supabase !== 'undefined' && typeof window.supabase.createClient === 'function') {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    console.log("Supabase Client Connected.");
+                    // Connectivity Test
+                    supabase.from('profiles').select('count', { count: 'exact', head: true })
+                        .then(({ count, error }) => {
+                            if (error) console.error("Connectivity Test Failed (Profiles Table):", error.message);
+                            else console.log("Connectivity Test Success. Profiles accessible. Count:", count);
+                        });
+                } else {
+                    console.warn("Supabase CDN unavailable. Running in Fallback Mode.");
+                }
+            } catch(e) { console.error("DB Init Error:", e); }
+
+            const dbCore = {
+                async signUp(email, password) {
+                    if(!supabase) throw new Error("Offline Mode: Registration unavailable.");
+                    const { data, error } = await supabase.auth.signUp({ email, password });
+                    if (error) {
+                        console.error("Supabase Auth Error:", error.message);
+                        console.dir(error);
+                        throw error;
+                    }
+                    return data;
+                },
+                async signIn(email, password) {
+                    if(!supabase) throw new Error("Offline Mode: Please use Dev Bypass.");
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    return data;
+                },
+                async getCurrentUser() {
+                    if(!supabase) return null;
+                    try {
+                        const { data: { session }, error } = await supabase.auth.getSession();
+                        return session ? session.user : null;
+                    } catch(e) { return null; }
+                },
+                async signOut() { if(supabase) await supabase.auth.signOut(); },
+                async getProfile(userId) {
+                    if(!supabase) return null;
+                    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
+                    return data;
+                },
+                async updateProfileXP(userId, xpGained) {
+                    if(!supabase) return;
+                    const { data: p } = await supabase.from('profiles').select('xp').eq('id', userId).single();
+                    if(p) await supabase.from('profiles').update({ xp: p.xp + xpGained }).eq('id', userId);
+                },
+                async getTestResults(userId) {
+                    if(!supabase) return [];
+                    const { data } = await supabase.from('test_results').select('*').eq('user_id', userId);
+                    return data || [];
+                },
+                async saveTestResult(userId, domain, score) {
+                    if(!supabase) return;
+                    await supabase.from('test_results').insert([{ user_id: userId, domain, score }]);
+                },
+                async getCompletedLessons(userId) {
+                    if(!supabase) return [];
+                    const { data } = await supabase.from('completed_lessons').select('*').eq('user_id', userId);
+                    return data || [];
+                },
+                async markLessonComplete(userId, lessonId, xpEarned) {
+                    if(!supabase) return;
+                    await supabase.from('completed_lessons').insert([{ user_id: userId, lesson_id: lessonId, xp_earned: xpEarned, unique_key: `${userId}_${lessonId}` }]);
+                }
+            };
+
+            window.db = { ...dbCore, isReady: true };
+            console.log("ANIMUS Database Synchronized.");
+            // Dispatch event to notify other scripts
+            window.dispatchEvent(new Event('db-ready'));
+        }
+
+        // Run init after a short delay to allow CDN script to load
+        setTimeout(initDB, 1000);
+    </script>
+</head>
+<body>
+    <div id="app-container">
+        <div style="position:fixed; top:10px; right:10px; font-size:10px; color:rgba(255,255,255,0.3); z-index:9999;">v2.2_INLINED</div>
+        <!-- Auth View -->
+        <section id="auth-view" class="view active">
+            <div class="container center-content">
+                <div class="logo">
+                    <span class="emoji">🧠</span>
+                    <h1>ANIMUS</h1>
+                    <p>Forge a superior mind. <span style="font-size: 0.7em; opacity: 0.5;">[v2.2]</span></p>
+                </div>
+                <div class="card auth-card">
+                    <form id="auth-form">
+                        <div class="input-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" required placeholder="example@domain.com">
+                        </div>
+                        <div class="input-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" required placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" id="auth-submit-btn">Sign In / Register</button>
+                    </form>
+                    <p id="auth-error" class="error-text hidden"></p>
+                    
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button id="dev-bypass-btn" class="btn btn-secondary text-sm" style="padding: 10px 15px;">🛠️ DEV: Bypass Auth & Assessments</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Assessment Dashboard View -->
+        <section id="assessment-dashboard-view" class="view hidden">
+            <div class="header">
+                <h2>Initial Assessments</h2>
+                <p>Complete all tests to unlock the curriculum.</p>
+            </div>
+            <div class="container pb-nav">
+                <div id="assessment-list" class="grid">
+                    <!-- Populated via JS -->
+                </div>
+                <button id="go-to-main-dashboard-btn" class="btn btn-primary btn-block mt-4 hidden">Enter Animus</button>
+            </div>
+        </section>
+
+        <!-- Assessment Runner View -->
+        <section id="assessment-runner-view" class="view hidden">
+            <div class="top-bar">
+                <button class="icon-btn back-btn" id="close-assessment-btn">✖</button>
+                <div class="progress-container">
+                    <div class="progress-bar" id="assessment-progress"></div>
+                </div>
+            </div>
+            <div class="container center-content flex-col pb-nav">
+                <h3 id="assessment-question-text" class="question-title"></h3>
+                <div id="assessment-options" class="options-grid w-full mt-4">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Dashboard View -->
+        <section id="main-dashboard-view" class="view hidden">
+            <div class="scroll-content pb-nav container">
+                <!-- Home Content (Default Active) -->
+                <div id="home-tab-content">
+                    <!-- Populated via JS -->
+                </div>
+                
+                <!-- Roadmap Content (Hidden by default) -->
+                <div id="roadmap-tab-content" class="hidden">
+                    <!-- Populated via JS -->
+                </div>
+
+                <!-- 48 Laws Content -->
+                <div id="tab-48" class="hidden">
+                    <div id="laws-48-list"></div>
+                </div>
+
+                <!-- Profile / Stats -->
+                <div id="tab-profile" class="hidden">
+                    <div id="stats-bars-profile"></div>
+                </div>
+            </div>
+
+            <!-- Premium Bottom Nav -->
+            <nav class="bottom-nav" id="bottom-nav">
+                <div class="nav-item active" data-target="home-tab-content">
+                    <span class="icon">🏠</span>
+                    <span>Status</span>
+                </div>
+                <div class="nav-item" data-target="roadmap-tab-content">
+                    <span class="icon">🗺️</span>
+                    <span>Path</span>
+                </div>
+                <div class="nav-item" data-target="tab-48">
+                    <span class="icon">♟️</span>
+                    <span>The 48</span>
+                </div>
+                <div class="nav-item" data-target="tab-profile">
+                    <span class="icon">👤</span>
+                    <span>Profile</span>
+                </div>
+            </nav>
+        </section>
+
+        <!-- Lesson Runner View -->
+        <section id="lesson-runner-view" class="view hidden">
+            <div class="top-bar">
+                <button class="icon-btn back-btn" id="close-lesson-btn">✖</button>
+                <div class="progress-container">
+                    <div class="progress-bar" id="lesson-progress"></div>
+                </div>
+            </div>
+            <div class="container slide-content pb-nav mt-4" id="lesson-slide-container">
+                <!-- Populated via JS -->
+            </div>
+            <div class="bottom-action-bar hidden" id="lesson-action-bar">
+                <button id="lesson-next-slide-btn" class="btn btn-primary btn-block">Continue</button>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data/assessments-data.js?v=2.2"></script>
+    <script src="js/data/stage1-lessons.js?v=2.2"></script>
+    <script src="js/data/stage2-lessons.js?v=2.2"></script>
+    <script src="js/data/stage3-lessons.js?v=2.2"></script>
+    <script src="js/data/stage4-lessons.js?v=2.2"></script>
+    <script src="js/data/stage5-lessons.js?v=2.2"></script>
+    <script src="js/data/stage6-lessons.js?v=2.2"></script>
+    <script src="js/data/stage7-lessons.js?v=2.2"></script>
+    <script src="js/data/stage8-lessons.js?v=2.2"></script>
+    <script src="js/data/stage9-lessons.js?v=2.2"></script>
+    <script src="js/data/stage10-lessons.js?v=2.2"></script>
+    <script src="js/data/48-laws.js?v=2.2"></script>
+    <script src="js/data/lessons-data.js?v=2.2"></script>
+    <script src="js/auth.js?v=2.2"></script>
+    <script src="js/assessments.js?v=2.2"></script>
+    <script src="js/lessons.js?v=2.2"></script>
+    <script src="js/dashboard.js?v=2.2"></script>
+    <script src="js/app.js?v=2.2"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then((registration) => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "ANIMUS Cognitive Platform",
+  "short_name": "ANIMUS",
+  "description": "Forge a superior mind through 10 stages of cognitive and psychological mastery.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#050508",
+  "theme_color": "#050508",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

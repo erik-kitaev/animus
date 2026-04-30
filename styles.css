@@ -1,0 +1,409 @@
+:root {
+    --bg-color: #050508;
+    --card-bg: #12121A;
+    --text-main: #FFFFFF;
+    --text-muted: #8E8E93;
+    --primary: #FFD700; /* Richer Gold */
+    --primary-gradient: linear-gradient(135deg, #FFD700 0%, #B8860B 100%);
+    --secondary: #1C1C1E;
+    --danger: #FF453A;
+    --success: #32D74B;
+    --radius: 28px;
+    --nav-height: 80px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --glass: rgba(18, 18, 26, 0.8);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: #000;
+    color: var(--text-main);
+    height: 100dvh;
+    overflow: hidden;
+    letter-spacing: -0.02em;
+}
+
+#app-container {
+    width: 100%;
+    height: 100%;
+    max-width: 500px; /* Tighter mobile feel */
+    margin: 0 auto;
+    position: relative;
+    background-color: var(--bg-color);
+    box-shadow: 0 0 100px rgba(0,0,0,0.5);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Views */
+.view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Changed from overflow-y: auto */
+    -webkit-overflow-scrolling: touch;
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--bg-color);
+}
+
+.view.hidden {
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+    transform: translateY(10px) scale(0.98);
+}
+
+.view.active {
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 10;
+    transform: translateY(0) scale(1);
+}
+
+/* Layout Utilities */
+.container {
+    padding: 24px;
+}
+
+.center-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100%;
+}
+
+.flex-col { display: flex; flex-direction: column; }
+.flex-row { display: flex; flex-direction: row; align-items: center; }
+.space-between { justify-content: space-between; }
+.w-full { width: 100%; }
+.mt-4 { margin-top: 24px; }
+.mb-6 { margin-bottom: 32px; }
+.pb-nav { padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 20px); }
+.text-sm { font-size: 0.85rem; font-weight: 500; }
+.text-gray { color: var(--text-muted); }
+.text-center { text-align: center; }
+
+/* Typography */
+h1 { font-weight: 900; font-size: 2.8rem; letter-spacing: -2px; line-height: 1; margin-bottom: 8px; }
+h2 { font-weight: 800; font-size: 1.8rem; letter-spacing: -1px; margin-bottom: 8px; }
+h3 { font-weight: 700; font-size: 1.4rem; letter-spacing: -0.5px; margin-bottom: 12px; }
+p { line-height: 1.6; color: rgba(255,255,255,0.7); }
+
+/* Components */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 28px;
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.btn {
+    border: none;
+    border-radius: 20px;
+    padding: 18px 24px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn:active { transform: scale(0.96); opacity: 0.9; }
+
+.btn-primary { 
+    background: var(--primary-gradient); 
+    color: #000; 
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+}
+
+.btn-secondary { 
+    background: rgba(255,255,255,0.05); 
+    color: white; 
+    border: 1px solid rgba(255,255,255,0.1); 
+    backdrop-filter: blur(10px);
+}
+
+.btn-block { 
+    width: 100%; 
+    margin-bottom: 12px; /* Ensure vertical spacing between stacked buttons */
+}
+.btn-block:last-child {
+    margin-bottom: 0;
+}
+
+.icon-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: white;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* Inputs */
+.input-group { margin-bottom: 20px; width: 100%; }
+.input-group label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.input-group input {
+    width: 100%;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.3);
+    color: white;
+    font-size: 1.05rem;
+    outline: none;
+    transition: all 0.2s;
+}
+.input-group input:focus { border-color: var(--primary); background: rgba(255,215,0,0.05); }
+
+/* Navigation Bar (The "Wowie" Part) */
+.bottom-nav {
+    position: absolute; /* Changed from fixed */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    padding-bottom: env(safe-area-inset-bottom);
+    background: rgba(10, 10, 15, 0.98); /* More solid for "stuck" feel */
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    flex: 1;
+    height: 100%;
+}
+
+.nav-item .icon { font-size: 1.4rem; transition: transform 0.3s; }
+.nav-item.active { color: var(--primary); }
+.nav-item.active .icon { transform: translateY(-2px); text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+
+/* Lesson Cards */
+.lesson-card {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(255,255,255,0.03);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lesson-card:active { transform: scale(0.97); background: rgba(255,255,255,0.03); }
+
+.lesson-card .icon-box {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+}
+
+.lesson-card .content { flex: 1; }
+.lesson-card h4 { font-size: 1.1rem; font-weight: 800; margin-bottom: 2px; color: #fff; }
+.lesson-card p { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+.lesson-card .xp-earned { color: var(--primary); font-weight: 900; font-size: 1rem; }
+
+/* Profile View */
+.profile-header {
+    text-align: center;
+    padding: 40px 0;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    background: var(--primary-gradient);
+    border-radius: 35px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    box-shadow: 0 10px 30px rgba(255,215,0,0.2);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.stat-card {
+    background: rgba(255,255,255,0.03);
+    border-radius: 24px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.stat-card .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 800; margin-bottom: 8px; }
+.stat-card .value { font-size: 1.8rem; font-weight: 900; color: #fff; }
+
+/* Lesson Progress Bar */
+.lesson-header {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: var(--bg-color);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.progress-track {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-gradient);
+    width: 0%;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 10px;
+}
+
+/* Animations */
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-up { animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+.bottom-action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 24px;
+    padding-bottom: calc(24px + var(--safe-bottom));
+    background: linear-gradient(to top, var(--bg-color) 80%, transparent);
+    z-index: 1000;
+}
+
+/* Quiz Buttons */
+.options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.option-btn {
+    width: 100%;
+    padding: 20px 24px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    color: #fff;
+    text-align: left;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.option-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.option-btn.correct {
+    background: rgba(46, 213, 115, 0.15) !important;
+    border-color: #2ed573 !important;
+    color: #2ed573 !important;
+    box-shadow: 0 0 20px rgba(46, 213, 115, 0.2);
+}
+
+.option-btn.wrong {
+    background: rgba(255, 71, 87, 0.15) !important;
+    border-color: #ff4757 !important;
+    color: #ff4757 !important;
+    box-shadow: 0 0 20px rgba(255, 71, 87, 0.2);
+}
+
+/* New Scrollable Area Support */
+.scroll-content {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 40px); /* Extra padding for PC scroll */
+}
+
+/* Scrollbar Styling for PC */
+::-webkit-scrollbar { 
+    width: 6px; 
+    background: transparent;
+}
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+/* Safe Areas for Notch */
+@supports (padding: env(safe-area-inset-top)) {
+    .container {
+        padding-top: calc(24px + env(safe-area-inset-top));
+    }
+}
