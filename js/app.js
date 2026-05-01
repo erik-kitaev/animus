@@ -1,4 +1,4 @@
-e ressodocument.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     // Initialize Engines
     window.assessmentEngine = new window.AssessmentEngine();
     window.dashboardEngine = new window.DashboardEngine();
